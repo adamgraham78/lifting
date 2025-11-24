@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Calendar, Play, Plus } from 'lucide-react'
+import Link from 'next/link'
 
 export default function WorkoutPage() {
   return (
@@ -21,10 +22,12 @@ export default function WorkoutPage() {
           <p className="text-foreground-secondary mb-6">
             Start a training program to begin logging workouts
           </p>
-          <Button variant="primary" size="lg">
-            <Plus className="w-5 h-5 mr-2" />
-            Start New Program
-          </Button>
+          <Link href="/planner">
+            <Button variant="primary" size="lg">
+              <Plus className="w-5 h-5 mr-2" />
+              Start New Program
+            </Button>
+          </Link>
         </Card>
 
         <div className="mt-8">
