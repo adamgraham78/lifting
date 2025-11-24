@@ -30,10 +30,12 @@ export default function Home() {
             <p className="text-foreground-secondary mb-6">
               Start a new training program to begin tracking your progress
             </p>
-            <Button variant="primary" size="lg">
-              <Plus className="w-5 h-5 mr-2" />
-              Start New Mesocycle
-            </Button>
+            <Link href="/planner">
+              <Button variant="primary" size="lg">
+                <Plus className="w-5 h-5 mr-2" />
+                Start New Mesocycle
+              </Button>
+            </Link>
           </Card>
         ) : (
           <Card className="mb-8">

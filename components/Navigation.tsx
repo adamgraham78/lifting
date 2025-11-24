@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Dumbbell, Calendar, TrendingUp, Settings } from 'lucide-react'
+import { Home, Dumbbell, Calendar, TrendingUp, Settings, LayoutGrid } from 'lucide-react'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/planner', label: 'Planner', icon: LayoutGrid },
   { href: '/exercises', label: 'Exercises', icon: Dumbbell },
   { href: '/workout', label: 'Workout', icon: Calendar },
   { href: '/analytics', label: 'Analytics', icon: TrendingUp },
