@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-background text-foreground;
+  }
+
+  body {
+    @apply antialiased;
+  }
+
+  /* Scrollbar styling for dark theme */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background-secondary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-foreground-tertiary rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-foreground-secondary;
+  }
+}
+
+@layer components {
+  /* Button styles */
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-hover;
+  }
+
+  .btn-secondary {
+    @apply btn bg-background-tertiary text-foreground hover:bg-background-secondary border border-foreground-tertiary;
+  }
+
+  .btn-ghost {
+    @apply btn hover:bg-background-tertiary;
+  }
+
+  /* Input styles */
+  .input {
+    @apply px-4 py-2 bg-background-secondary border border-foreground-tertiary rounded-lg text-foreground placeholder:text-foreground-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-background-secondary border border-foreground-tertiary rounded-lg p-6;
+  }
+
+  /* Utility classes */
+  .text-display {
+    @apply font-display text-4xl font-bold tracking-tight;
+  }
+}
