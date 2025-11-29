@@ -64,11 +64,16 @@ interface DayExercise {
   restSeconds: number
 }
 
+interface ExerciseCard {
+  id: string
+  muscleGroupId: string
+  exercises: DayExercise[]
+}
+
 interface Day {
   dayNumber: number
   name: string
-  muscleGroupIds: string[]
-  exercises: DayExercise[]
+  exerciseCards: ExerciseCard[]
 }
 
 export default function PlannerPage() {
@@ -100,6 +105,7 @@ export default function PlannerPage() {
     if (step === 'priorities' && muscleGroups.length === 0) {
       loadMuscleGroups()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step])
 
   // Load exercises when moving to schedule step
@@ -107,6 +113,7 @@ export default function PlannerPage() {
     if (step === 'schedule' && availableExercises.length === 0) {
       loadExercises()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step])
 
   // Initialize days when moving to schedule step
@@ -117,12 +124,12 @@ export default function PlannerPage() {
         initialDays.push({
           dayNumber: i,
           name: `Day ${i}`,
-          muscleGroupIds: [],
-          exercises: [],
+          exerciseCards: [],
         })
       }
       setDays(initialDays)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, customConfig.daysPerWeek])
 
   const loadMuscleGroups = async () => {
@@ -177,44 +184,18 @@ export default function PlannerPage() {
     setMusclePriorities(prev => new Map(prev).set(muscleGroupId, priority))
   }
 
-  const addMuscleGroupToDay = (dayNumber: number, muscleGroupId: string) => {
-    setDays(prevDays =>
-      prevDays.map(day =>
-        day.dayNumber === dayNumber && !day.muscleGroupIds.includes(muscleGroupId)
-          ? { ...day, muscleGroupIds: [...day.muscleGroupIds, muscleGroupId] }
-          : day
-      )
-    )
-  }
-
-  const removeMuscleGroupFromDay = (dayNumber: number, muscleGroupId: string) => {
-    setDays(prevDays =>
-      prevDays.map(day =>
-        day.dayNumber === dayNumber
-          ? { ...day, muscleGroupIds: day.muscleGroupIds.filter(id => id !== muscleGroupId) }
-          : day
-      )
-    )
-  }
-
-  const addExerciseToDay = (dayNumber: number, exerciseId: string) => {
-    const exercise = availableExercises.find(e => e.id === exerciseId)
-    if (!exercise) return
-
+  const addCardToDay = (dayNumber: number) => {
     setDays(prevDays =>
       prevDays.map(day =>
         day.dayNumber === dayNumber
           ? {
               ...day,
-              exercises: [
-                ...day.exercises,
+              exerciseCards: [
+                ...day.exerciseCards,
                 {
-                  exerciseId,
-                  exercise,
-                  sets: 3,
-                  repRangeMin: 8,
-                  repRangeMax: 12,
-                  restSeconds: 90,
+                  id: `card-${Date.now()}-${Math.random()}`,
+                  muscleGroupId: '',
+                  exercises: [],
                 },
               ],
             }
@@ -223,27 +204,104 @@ export default function PlannerPage() {
     )
   }
 
-  const removeExerciseFromDay = (dayNumber: number, exerciseId: string) => {
+  const removeCardFromDay = (dayNumber: number, cardId: string) => {
     setDays(prevDays =>
       prevDays.map(day =>
         day.dayNumber === dayNumber
           ? {
               ...day,
-              exercises: day.exercises.filter(e => e.exerciseId !== exerciseId),
+              exerciseCards: day.exerciseCards.filter(card => card.id !== cardId),
             }
           : day
       )
     )
   }
 
-  const updateExerciseSets = (dayNumber: number, exerciseId: string, sets: number) => {
+  const updateCardMuscleGroup = (dayNumber: number, cardId: string, muscleGroupId: string) => {
     setDays(prevDays =>
       prevDays.map(day =>
         day.dayNumber === dayNumber
           ? {
               ...day,
-              exercises: day.exercises.map(e =>
-                e.exerciseId === exerciseId ? { ...e, sets: Math.max(1, sets) } : e
+              exerciseCards: day.exerciseCards.map(card =>
+                card.id === cardId
+                  ? { ...card, muscleGroupId, exercises: [] } // Clear exercises when muscle group changes
+                  : card
+              ),
+            }
+          : day
+      )
+    )
+  }
+
+  const addExerciseToCard = (dayNumber: number, cardId: string, exerciseId: string) => {
+    const exercise = availableExercises.find(e => e.id === exerciseId)
+    if (!exercise) return
+
+    setDays(prevDays =>
+      prevDays.map(day =>
+        day.dayNumber === dayNumber
+          ? {
+              ...day,
+              exerciseCards: day.exerciseCards.map(card =>
+                card.id === cardId
+                  ? {
+                      ...card,
+                      exercises: [
+                        ...card.exercises,
+                        {
+                          exerciseId,
+                          exercise,
+                          sets: 3,
+                          repRangeMin: 8,
+                          repRangeMax: 12,
+                          restSeconds: 90,
+                        },
+                      ],
+                    }
+                  : card
+              ),
+            }
+          : day
+      )
+    )
+  }
+
+  const removeExerciseFromCard = (dayNumber: number, cardId: string, exerciseId: string) => {
+    setDays(prevDays =>
+      prevDays.map(day =>
+        day.dayNumber === dayNumber
+          ? {
+              ...day,
+              exerciseCards: day.exerciseCards.map(card =>
+                card.id === cardId
+                  ? {
+                      ...card,
+                      exercises: card.exercises.filter(e => e.exerciseId !== exerciseId),
+                    }
+                  : card
+              ),
+            }
+          : day
+      )
+    )
+  }
+
+  const updateExerciseSets = (dayNumber: number, cardId: string, exerciseId: string, sets: number) => {
+    setDays(prevDays =>
+      prevDays.map(day =>
+        day.dayNumber === dayNumber
+          ? {
+              ...day,
+              exerciseCards: day.exerciseCards.map(card =>
+                card.id === cardId
+                  ? {
+                      ...card,
+                      exercises: card.exercises.map(e =>
+                        e.exerciseId === exerciseId ? { ...e, sets: Math.max(1, sets) } : e
+                      ),
+                    }
+                  : card
               ),
             }
           : day
@@ -262,6 +320,7 @@ export default function PlannerPage() {
   const handleSaveTemplate = async () => {
     setSaving(true)
     try {
+      // Flatten all exercises from all cards across all days
       const templateData: CreateTemplateData = {
         name: customConfig.name,
         durationWeeks: customConfig.durationWeeks,
@@ -270,18 +329,24 @@ export default function PlannerPage() {
           muscleGroupId,
           priority,
         })),
-        days: days.map(day => ({
-          dayNumber: day.dayNumber,
-          name: day.name,
-          exercises: day.exercises.map((ex, idx) => ({
-            exerciseId: ex.exerciseId,
-            orderNum: idx + 1,
-            defaultSets: ex.sets,
-            repRangeMin: ex.repRangeMin,
-            repRangeMax: ex.repRangeMax,
-            restSeconds: ex.restSeconds,
-          })),
-        })),
+        days: days.map(day => {
+          let orderNum = 1
+          const allExercises = day.exerciseCards.flatMap(card =>
+            card.exercises.map(ex => ({
+              exerciseId: ex.exerciseId,
+              orderNum: orderNum++,
+              defaultSets: ex.sets,
+              repRangeMin: ex.repRangeMin,
+              repRangeMax: ex.repRangeMax,
+              restSeconds: ex.restSeconds,
+            }))
+          )
+          return {
+            dayNumber: day.dayNumber,
+            name: day.name,
+            exercises: allExercises,
+          }
+        }),
       }
 
       await createMesocycleTemplate(templateData)
@@ -295,20 +360,21 @@ export default function PlannerPage() {
     }
   }
 
-  const availableExercisesForDay = () => {
+  const availableExercisesForCard = (cardId: string) => {
     const currentDay = days.find(d => d.dayNumber === selectedDay)
     if (!currentDay) return []
 
-    // Filter exercises by muscle groups assigned to this day
-    const muscleGroupFiltered = currentDay.muscleGroupIds.length > 0
-      ? availableExercises.filter(ex =>
-          currentDay.muscleGroupIds.includes(ex.primaryMuscle)
-        )
-      : availableExercises
+    const card = currentDay.exerciseCards.find(c => c.id === cardId)
+    if (!card || !card.muscleGroupId) return []
 
-    // Exclude exercises already added to this day
+    // Filter exercises by the muscle group assigned to this card
+    const muscleGroupFiltered = availableExercises.filter(ex =>
+      ex.primaryMuscle === card.muscleGroupId
+    )
+
+    // Exclude exercises already added to this card
     return muscleGroupFiltered.filter(ex =>
-      !currentDay.exercises.some(e => e.exerciseId === ex.id)
+      !card.exercises.some(e => e.exerciseId === ex.id)
     )
   }
 
@@ -645,183 +711,175 @@ export default function PlannerPage() {
 
             {/* Day tabs */}
             <div className="flex space-x-2 mb-6 overflow-x-auto pb-2">
-              {days.map(day => (
-                <button
-                  key={day.dayNumber}
-                  onClick={() => setSelectedDay(day.dayNumber)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                    selectedDay === day.dayNumber
-                      ? 'bg-accent text-background'
-                      : 'bg-background-secondary text-foreground hover:bg-background-tertiary'
-                  }`}
-                >
-                  {day.name} ({day.exercises.length})
-                </button>
-              ))}
+              {days.map(day => {
+                const totalExercises = day.exerciseCards.reduce((sum, card) => sum + card.exercises.length, 0)
+                return (
+                  <button
+                    key={day.dayNumber}
+                    onClick={() => setSelectedDay(day.dayNumber)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                      selectedDay === day.dayNumber
+                        ? 'bg-accent text-background'
+                        : 'bg-background-secondary text-foreground hover:bg-background-tertiary'
+                    }`}
+                  >
+                    {day.name} ({totalExercises})
+                  </button>
+                )
+              })}
             </div>
 
             {/* Selected day content */}
             {days.find(d => d.dayNumber === selectedDay) && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left: Day exercises */}
-                <div className="lg:col-span-2">
-                  <Card>
-                    <div className="mb-4">
-                      <Input
-                        label="Day Name"
-                        value={days.find(d => d.dayNumber === selectedDay)?.name || ''}
-                        onChange={(e) => updateDayName(selectedDay, e.target.value)}
-                        placeholder="e.g., Push Day, Leg Day"
-                      />
-                    </div>
+              <div>
+                {/* Day name input */}
+                <Card className="mb-6">
+                  <Input
+                    label="Day Name"
+                    value={days.find(d => d.dayNumber === selectedDay)?.name || ''}
+                    onChange={(e) => updateDayName(selectedDay, e.target.value)}
+                    placeholder="e.g., Push Day, Leg Day"
+                  />
+                </Card>
 
-                    {/* Muscle Groups Section */}
-                    <div className="mb-6">
-                      <label className="text-sm font-medium text-foreground mb-2 block">
-                        Muscle Groups for This Day
-                      </label>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.map(mgId => {
-                          const muscle = muscleGroups.find(m => m.id === mgId)
-                          return (
-                            <div
-                              key={mgId}
-                              className="flex items-center space-x-2 bg-accent text-background px-3 py-1 rounded-full"
-                            >
-                              <span className="text-sm font-medium">{muscle?.name.toUpperCase()}</span>
-                              <button
-                                onClick={() => removeMuscleGroupFromDay(selectedDay, mgId)}
-                                className="hover:bg-background hover:text-accent rounded-full p-0.5 transition-colors"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )
-                        })}
-                        {days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.length === 0 && (
-                          <span className="text-sm text-foreground-secondary">No muscle groups assigned</span>
-                        )}
-                      </div>
-                      <Select
-                        options={[
-                          { value: '', label: 'Add muscle group...' },
-                          ...muscleGroups
-                            .filter(mg => !days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.includes(mg.id))
-                            .map(mg => ({
-                              value: mg.id,
-                              label: mg.name.toUpperCase(),
-                            }))
-                        ]}
-                        value=""
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            addMuscleGroupToDay(selectedDay, e.target.value)
-                          }
-                        }}
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="text-sm font-medium text-foreground-secondary mb-2">
-                        Exercises ({days.find(d => d.dayNumber === selectedDay)?.exercises.length || 0})
-                      </div>
-                      {days.find(d => d.dayNumber === selectedDay)?.exercises.map((ex, idx) => (
-                        <div
-                          key={ex.exerciseId}
-                          className="bg-background-secondary rounded-lg p-4"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <div className="font-medium text-foreground">
-                                {idx + 1}. {ex.exercise.name}
-                              </div>
-                              <div className="text-xs text-foreground-secondary mt-1">
-                                {ex.exercise.equipment} • {ex.exercise.movementPattern}
-                              </div>
+                {/* Exercise cards */}
+                <div className="space-y-4">
+                  {days.find(d => d.dayNumber === selectedDay)?.exerciseCards.map((card, cardIdx) => {
+                    const muscle = muscleGroups.find(m => m.id === card.muscleGroupId)
+                    return (
+                      <Card key={card.id}>
+                        <div className="space-y-4">
+                          {/* Card header with muscle group selector and delete button */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 mr-4">
+                              <Select
+                                label="Muscle Group"
+                                options={[
+                                  { value: '', label: 'Select muscle group...' },
+                                  ...muscleGroups.map(mg => ({
+                                    value: mg.id,
+                                    label: mg.name.toUpperCase(),
+                                  }))
+                                ]}
+                                value={card.muscleGroupId}
+                                onChange={(e) => updateCardMuscleGroup(selectedDay, card.id, e.target.value)}
+                              />
                             </div>
                             <button
-                              onClick={() => removeExerciseFromDay(selectedDay, ex.exerciseId)}
-                              className="text-foreground-tertiary hover:text-error transition-colors"
+                              onClick={() => removeCardFromDay(selectedDay, card.id)}
+                              className="text-foreground-tertiary hover:text-error transition-colors mt-6"
+                              title="Delete this card"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
 
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
-                              <label className="text-xs text-foreground-secondary">Sets:</label>
-                              <div className="flex items-center space-x-1">
-                                <button
-                                  onClick={() => updateExerciseSets(selectedDay, ex.exerciseId, ex.sets - 1)}
-                                  className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
-                                >
-                                  -
-                                </button>
-                                <span className="w-8 text-center font-medium text-foreground">
-                                  {ex.sets}
-                                </span>
-                                <button
-                                  onClick={() => updateExerciseSets(selectedDay, ex.exerciseId, ex.sets + 1)}
-                                  className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
-                                >
-                                  +
-                                </button>
-                              </div>
+                          {/* Exercise selection dropdown */}
+                          {card.muscleGroupId && (
+                            <div>
+                              <Select
+                                label="Add Exercise"
+                                options={[
+                                  { value: '', label: 'Select exercise...' },
+                                  ...availableExercisesForCard(card.id).map(ex => ({
+                                    value: ex.id,
+                                    label: ex.name,
+                                  }))
+                                ]}
+                                value=""
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    addExerciseToCard(selectedDay, card.id, e.target.value)
+                                  }
+                                }}
+                              />
                             </div>
-                            <div className="text-xs text-foreground-secondary">
-                              {ex.repRangeMin}-{ex.repRangeMax} reps • {ex.restSeconds}s rest
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                          )}
 
-                      {days.find(d => d.dayNumber === selectedDay)?.exercises.length === 0 && (
-                        <div className="text-center py-8 text-foreground-secondary">
-                          No exercises added yet. Select from the available exercises on the right.
+                          {/* List of exercises in this card */}
+                          {card.exercises.length > 0 && (
+                            <div className="space-y-3 pt-2 border-t border-foreground-tertiary">
+                              <div className="text-sm font-medium text-foreground-secondary">
+                                {muscle?.name.toUpperCase()} Exercises ({card.exercises.length})
+                              </div>
+                              {card.exercises.map((ex, idx) => (
+                                <div
+                                  key={ex.exerciseId}
+                                  className="bg-background-secondary rounded-lg p-4"
+                                >
+                                  <div className="flex items-start justify-between mb-3">
+                                    <div className="flex-1">
+                                      <div className="font-medium text-foreground">
+                                        {idx + 1}. {ex.exercise.name}
+                                      </div>
+                                      <div className="text-xs text-foreground-secondary mt-1">
+                                        {ex.exercise.equipment} • {ex.exercise.movementPattern}
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => removeExerciseFromCard(selectedDay, card.id, ex.exerciseId)}
+                                      className="text-foreground-tertiary hover:text-error transition-colors"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </div>
+
+                                  <div className="flex items-center space-x-4">
+                                    <div className="flex items-center space-x-2">
+                                      <label className="text-xs text-foreground-secondary">Sets:</label>
+                                      <div className="flex items-center space-x-1">
+                                        <button
+                                          onClick={() => updateExerciseSets(selectedDay, card.id, ex.exerciseId, ex.sets - 1)}
+                                          className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
+                                        >
+                                          -
+                                        </button>
+                                        <span className="w-8 text-center font-medium text-foreground">
+                                          {ex.sets}
+                                        </span>
+                                        <button
+                                          onClick={() => updateExerciseSets(selectedDay, card.id, ex.exerciseId, ex.sets + 1)}
+                                          className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-foreground-secondary">
+                                      {ex.repRangeMin}-{ex.repRangeMax} reps • {ex.restSeconds}s rest
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {!card.muscleGroupId && (
+                            <div className="text-center py-4 text-foreground-secondary text-sm">
+                              Select a muscle group to see available exercises
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </Card>
+                    )
+                  })}
+
+                  {/* Add new card button */}
+                  <button
+                    onClick={() => addCardToDay(selectedDay)}
+                    className="w-full border-2 border-dashed border-foreground-tertiary hover:border-accent hover:bg-background-secondary rounded-lg p-6 transition-colors group"
+                  >
+                    <div className="flex items-center justify-center space-x-2 text-foreground-secondary group-hover:text-accent">
+                      <Plus className="w-5 h-5" />
+                      <span className="font-medium">Add Muscle Group Card</span>
                     </div>
-                  </Card>
-                </div>
+                  </button>
 
-                {/* Right: Available exercises */}
-                <div>
-                  <Card>
-                    <h3 className="font-bold text-foreground mb-4">Available Exercises</h3>
-                    {days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.length === 0 ? (
-                      <div className="text-center py-8 text-foreground-secondary text-sm">
-                        <p className="mb-2">No muscle groups assigned to this day.</p>
-                        <p>Add muscle groups above to see available exercises.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                        {availableExercisesForDay().map(exercise => (
-                          <button
-                            key={exercise.id}
-                            onClick={() => addExerciseToDay(selectedDay, exercise.id)}
-                            className="w-full text-left p-3 bg-background-secondary hover:bg-background-tertiary rounded-lg transition-colors group"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="font-medium text-foreground text-sm">
-                                  {exercise.name}
-                                </div>
-                                <div className="text-xs text-foreground-secondary mt-1">
-                                  {exercise.equipment}
-                                </div>
-                              </div>
-                              <Plus className="w-4 h-4 text-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          </button>
-                        ))}
-                        {availableExercisesForDay().length === 0 && (
-                          <div className="text-center py-4 text-foreground-secondary text-sm">
-                            All exercises for these muscle groups have been assigned
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </Card>
+                  {days.find(d => d.dayNumber === selectedDay)?.exerciseCards.length === 0 && (
+                    <div className="text-center py-12 text-foreground-secondary">
+                      No exercise cards yet. Click &quot;Add Muscle Group Card&quot; to get started.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -837,7 +895,7 @@ export default function PlannerPage() {
                 variant="primary"
                 size="lg"
                 onClick={handleSaveTemplate}
-                disabled={saving || days.every(d => d.exercises.length === 0)}
+                disabled={saving || days.every(d => d.exerciseCards.every(card => card.exercises.length === 0))}
               >
                 {saving ? 'Saving...' : 'Save Template'}
               </Button>
