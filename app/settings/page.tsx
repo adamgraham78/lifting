@@ -25,7 +25,7 @@ export default function SettingsPage() {
                 Muscle group priorities are now set per mesocycle in the planner. This allows you to have different priorities for different training programs.
               </p>
               <p className="text-sm text-foreground-secondary">
-                When creating a new mesocycle template in the planner, you'll be able to set muscle priorities that will be used for auto-regulation during that specific program.
+                When creating a new mesocycle template in the planner, you&apos;ll be able to set muscle priorities that will be used for auto-regulation during that specific program.
               </p>
             </div>
           </div>

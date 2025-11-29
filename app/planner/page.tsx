@@ -53,7 +53,7 @@ const starterTemplates = [
   },
 ]
 
-type PlannerStep = 'config' | 'priorities' | 'exercises' | 'schedule'
+type PlannerStep = 'config' | 'priorities' | 'schedule'
 
 interface DayExercise {
   exerciseId: string
@@ -67,6 +67,7 @@ interface DayExercise {
 interface Day {
   dayNumber: number
   name: string
+  muscleGroupIds: string[]
   exercises: DayExercise[]
 }
 
@@ -85,10 +86,8 @@ export default function PlannerPage() {
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([])
   const [musclePriorities, setMusclePriorities] = useState<Map<string, MuscleGroupPriority>>(new Map())
 
-  // Exercise selection state
+  // Exercise and schedule state
   const [availableExercises, setAvailableExercises] = useState<Exercise[]>([])
-  const [selectedExercises, setSelectedExercises] = useState<Set<string>>(new Set())
-  const [exerciseSearch, setExerciseSearch] = useState('')
   const [loading, setLoading] = useState(false)
 
   // Schedule state
@@ -103,9 +102,9 @@ export default function PlannerPage() {
     }
   }, [step])
 
-  // Load exercises when moving to exercise selection step
+  // Load exercises when moving to schedule step
   useEffect(() => {
-    if (step === 'exercises' && availableExercises.length === 0) {
+    if (step === 'schedule' && availableExercises.length === 0) {
       loadExercises()
     }
   }, [step])
@@ -118,6 +117,7 @@ export default function PlannerPage() {
         initialDays.push({
           dayNumber: i,
           name: `Day ${i}`,
+          muscleGroupIds: [],
           exercises: [],
         })
       }
@@ -170,27 +170,31 @@ export default function PlannerPage() {
   }
 
   const handlePrioritiesNext = () => {
-    setStep('exercises')
+    setStep('schedule')
   }
 
   const handlePriorityChange = (muscleGroupId: string, priority: MuscleGroupPriority) => {
     setMusclePriorities(prev => new Map(prev).set(muscleGroupId, priority))
   }
 
-  const toggleExercise = (exerciseId: string) => {
-    const newSelected = new Set(selectedExercises)
-    if (newSelected.has(exerciseId)) {
-      newSelected.delete(exerciseId)
-    } else {
-      newSelected.add(exerciseId)
-    }
-    setSelectedExercises(newSelected)
+  const addMuscleGroupToDay = (dayNumber: number, muscleGroupId: string) => {
+    setDays(prevDays =>
+      prevDays.map(day =>
+        day.dayNumber === dayNumber && !day.muscleGroupIds.includes(muscleGroupId)
+          ? { ...day, muscleGroupIds: [...day.muscleGroupIds, muscleGroupId] }
+          : day
+      )
+    )
   }
 
-  const handleExercisesNext = () => {
-    if (selectedExercises.size > 0) {
-      setStep('schedule')
-    }
+  const removeMuscleGroupFromDay = (dayNumber: number, muscleGroupId: string) => {
+    setDays(prevDays =>
+      prevDays.map(day =>
+        day.dayNumber === dayNumber
+          ? { ...day, muscleGroupIds: day.muscleGroupIds.filter(id => id !== muscleGroupId) }
+          : day
+      )
+    )
   }
 
   const addExerciseToDay = (dayNumber: number, exerciseId: string) => {
@@ -291,14 +295,22 @@ export default function PlannerPage() {
     }
   }
 
-  const filteredExercises = availableExercises.filter(ex =>
-    ex.name.toLowerCase().includes(exerciseSearch.toLowerCase())
-  )
+  const availableExercisesForDay = () => {
+    const currentDay = days.find(d => d.dayNumber === selectedDay)
+    if (!currentDay) return []
 
-  const availableExercisesForDay = availableExercises.filter(ex =>
-    selectedExercises.has(ex.id) &&
-    !days.find(d => d.dayNumber === selectedDay)?.exercises.some(e => e.exerciseId === ex.id)
-  )
+    // Filter exercises by muscle groups assigned to this day
+    const muscleGroupFiltered = currentDay.muscleGroupIds.length > 0
+      ? availableExercises.filter(ex =>
+          currentDay.muscleGroupIds.includes(ex.primaryMuscle)
+        )
+      : availableExercises
+
+    // Exclude exercises already added to this day
+    return muscleGroupFiltered.filter(ex =>
+      !currentDay.exercises.some(e => e.exerciseId === ex.id)
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -309,8 +321,7 @@ export default function PlannerPage() {
           <p className="text-foreground-secondary">
             {mode === 'custom' && step === 'config' && 'Create a new training program'}
             {mode === 'custom' && step === 'priorities' && 'Set muscle group priorities for auto-regulation'}
-            {mode === 'custom' && step === 'exercises' && 'Select exercises for your program'}
-            {mode === 'custom' && step === 'schedule' && 'Assign exercises to training days'}
+            {mode === 'custom' && step === 'schedule' && 'Plan your weekly training schedule'}
             {mode === 'template' && 'Choose from starter templates'}
           </p>
         </div>
@@ -329,29 +340,20 @@ export default function PlannerPage() {
             <div className="w-12 h-0.5 bg-foreground-tertiary" />
             <div className={`flex items-center ${step === 'priorities' ? 'text-accent' : 'text-foreground-tertiary'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step === 'exercises' || step === 'schedule' ? 'bg-accent text-background' : step === 'priorities' ? 'border-2 border-current' : 'border-2 border-current'
+                step === 'schedule' ? 'bg-accent text-background' : step === 'priorities' ? 'border-2 border-current' : 'border-2 border-current'
               }`}>
-                {step === 'exercises' || step === 'schedule' ? <Check className="w-5 h-5" /> : '2'}
+                {step === 'schedule' ? <Check className="w-5 h-5" /> : '2'}
               </div>
               <span className="ml-2 font-medium text-sm">Priorities</span>
-            </div>
-            <div className="w-12 h-0.5 bg-foreground-tertiary" />
-            <div className={`flex items-center ${step === 'exercises' ? 'text-accent' : 'text-foreground-tertiary'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step === 'schedule' ? 'bg-accent text-background' : step === 'exercises' ? 'border-2 border-current' : 'border-2 border-current'
-              }`}>
-                {step === 'schedule' ? <Check className="w-5 h-5" /> : '3'}
-              </div>
-              <span className="ml-2 font-medium text-sm">Exercises</span>
             </div>
             <div className="w-12 h-0.5 bg-foreground-tertiary" />
             <div className={`flex items-center ${step === 'schedule' ? 'text-accent' : 'text-foreground-tertiary'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 step === 'schedule' ? 'border-2 border-current' : 'border-2 border-current'
               }`}>
-                4
+                3
               </div>
-              <span className="ml-2 font-medium text-sm">Schedule</span>
+              <span className="ml-2 font-medium text-sm">Weekly Plan</span>
             </div>
           </div>
         )}
@@ -618,93 +620,14 @@ export default function PlannerPage() {
                 size="lg"
                 onClick={handlePrioritiesNext}
               >
-                Continue to Exercise Selection
+                Continue to Weekly Plan
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </div>
         )}
 
-        {/* Custom Mode - Exercise Selection Step */}
-        {mode === 'custom' && step === 'exercises' && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-foreground">
-                Select Exercises ({selectedExercises.size} selected)
-              </h2>
-              <Button
-                variant="secondary"
-                onClick={() => setStep('priorities')}
-              >
-                <ChevronLeft className="w-5 h-5 mr-1" />
-                Back
-              </Button>
-            </div>
-
-            <div className="mb-6">
-              <Input
-                placeholder="Search exercises..."
-                value={exerciseSearch}
-                onChange={(e) => setExerciseSearch(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {loading ? (
-                <div className="col-span-full text-center py-8 text-foreground-secondary">
-                  Loading exercises...
-                </div>
-              ) : (
-                filteredExercises.map(exercise => (
-                  <Card
-                    key={exercise.id}
-                    hover
-                    onClick={() => toggleExercise(exercise.id)}
-                    className={`cursor-pointer transition-all ${
-                      selectedExercises.has(exercise.id)
-                        ? 'ring-2 ring-accent border-accent'
-                        : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-foreground mb-1">
-                          {exercise.name}
-                        </h3>
-                        <p className="text-xs text-foreground-secondary">
-                          {exercise.equipment} • {exercise.movementPattern}
-                        </p>
-                      </div>
-                      {selectedExercises.has(exercise.id) && (
-                        <Check className="w-5 h-5 text-accent flex-shrink-0 ml-2" />
-                      )}
-                    </div>
-                  </Card>
-                ))
-              )}
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <Button
-                variant="secondary"
-                onClick={() => setStep('priorities')}
-              >
-                Back
-              </Button>
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handleExercisesNext}
-                disabled={selectedExercises.size === 0}
-              >
-                Continue to Schedule
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Custom Mode - Schedule/Kanban Step */}
+        {/* Custom Mode - Weekly Planning Step */}
         {mode === 'custom' && step === 'schedule' && (
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -713,7 +636,7 @@ export default function PlannerPage() {
               </h2>
               <Button
                 variant="secondary"
-                onClick={() => setStep('exercises')}
+                onClick={() => setStep('priorities')}
               >
                 <ChevronLeft className="w-5 h-5 mr-1" />
                 Back
@@ -749,6 +672,52 @@ export default function PlannerPage() {
                         value={days.find(d => d.dayNumber === selectedDay)?.name || ''}
                         onChange={(e) => updateDayName(selectedDay, e.target.value)}
                         placeholder="e.g., Push Day, Leg Day"
+                      />
+                    </div>
+
+                    {/* Muscle Groups Section */}
+                    <div className="mb-6">
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Muscle Groups for This Day
+                      </label>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.map(mgId => {
+                          const muscle = muscleGroups.find(m => m.id === mgId)
+                          return (
+                            <div
+                              key={mgId}
+                              className="flex items-center space-x-2 bg-accent text-background px-3 py-1 rounded-full"
+                            >
+                              <span className="text-sm font-medium">{muscle?.name.toUpperCase()}</span>
+                              <button
+                                onClick={() => removeMuscleGroupFromDay(selectedDay, mgId)}
+                                className="hover:bg-background hover:text-accent rounded-full p-0.5 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )
+                        })}
+                        {days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.length === 0 && (
+                          <span className="text-sm text-foreground-secondary">No muscle groups assigned</span>
+                        )}
+                      </div>
+                      <Select
+                        options={[
+                          { value: '', label: 'Add muscle group...' },
+                          ...muscleGroups
+                            .filter(mg => !days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.includes(mg.id))
+                            .map(mg => ({
+                              value: mg.id,
+                              label: mg.name.toUpperCase(),
+                            }))
+                        ]}
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            addMuscleGroupToDay(selectedDay, e.target.value)
+                          }
+                        }}
                       />
                     </div>
 
@@ -819,32 +788,39 @@ export default function PlannerPage() {
                 <div>
                   <Card>
                     <h3 className="font-bold text-foreground mb-4">Available Exercises</h3>
-                    <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                      {availableExercisesForDay.map(exercise => (
-                        <button
-                          key={exercise.id}
-                          onClick={() => addExerciseToDay(selectedDay, exercise.id)}
-                          className="w-full text-left p-3 bg-background-secondary hover:bg-background-tertiary rounded-lg transition-colors group"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium text-foreground text-sm">
-                                {exercise.name}
+                    {days.find(d => d.dayNumber === selectedDay)?.muscleGroupIds.length === 0 ? (
+                      <div className="text-center py-8 text-foreground-secondary text-sm">
+                        <p className="mb-2">No muscle groups assigned to this day.</p>
+                        <p>Add muscle groups above to see available exercises.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                        {availableExercisesForDay().map(exercise => (
+                          <button
+                            key={exercise.id}
+                            onClick={() => addExerciseToDay(selectedDay, exercise.id)}
+                            className="w-full text-left p-3 bg-background-secondary hover:bg-background-tertiary rounded-lg transition-colors group"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium text-foreground text-sm">
+                                  {exercise.name}
+                                </div>
+                                <div className="text-xs text-foreground-secondary mt-1">
+                                  {exercise.equipment}
+                                </div>
                               </div>
-                              <div className="text-xs text-foreground-secondary mt-1">
-                                {exercise.equipment}
-                              </div>
+                              <Plus className="w-4 h-4 text-accent opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
-                            <Plus className="w-4 h-4 text-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
+                        {availableExercisesForDay().length === 0 && (
+                          <div className="text-center py-4 text-foreground-secondary text-sm">
+                            All exercises for these muscle groups have been assigned
                           </div>
-                        </button>
-                      ))}
-                      {availableExercisesForDay.length === 0 && (
-                        <div className="text-center py-4 text-foreground-secondary text-sm">
-                          All selected exercises have been assigned
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </Card>
                 </div>
               </div>
@@ -853,7 +829,7 @@ export default function PlannerPage() {
             <div className="flex justify-end space-x-3 mt-6">
               <Button
                 variant="secondary"
-                onClick={() => setStep('exercises')}
+                onClick={() => setStep('priorities')}
               >
                 Back
               </Button>

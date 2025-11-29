@@ -48,6 +48,7 @@ export const convertMesocycleTemplate = (row: MesocycleTemplateRow): MesocycleTe
   daysPerWeek: row.days_per_week,
   isSpecialization: row.is_specialization,
   specializationType: row.specialization_type as 'arm_specialization' | undefined,
+  musclePriorities: [],
   days: [],
   createdAt: new Date(row.created_at),
 })
