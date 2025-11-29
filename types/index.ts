@@ -23,6 +23,14 @@ export interface Exercise {
   createdAt: Date
 }
 
+export interface TemplateMuscleGroupPriority {
+  id: string
+  templateId: string
+  muscleGroupId: string
+  priority: MuscleGroupPriority
+  muscleGroup?: MuscleGroup  // populated via join
+}
+
 export interface MesocycleTemplate {
   id: string
   name: string
@@ -30,6 +38,7 @@ export interface MesocycleTemplate {
   daysPerWeek: number
   isSpecialization: boolean
   specializationType?: 'arm_specialization'
+  musclePriorities: TemplateMuscleGroupPriority[]
   days: TemplateDay[]
   createdAt: Date
 }
@@ -194,6 +203,14 @@ export interface MesocycleTemplateRow {
   days_per_week: number
   is_specialization: boolean
   specialization_type: string | null
+  created_at: string
+}
+
+export interface TemplateMuscleGroupPriorityRow {
+  id: string
+  template_id: string
+  muscle_group_id: string
+  priority: MuscleGroupPriority
   created_at: string
 }
 

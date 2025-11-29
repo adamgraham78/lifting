@@ -1,7 +1,7 @@
 // Mesocycle Template Service
 
 import { supabase } from '@/lib/supabase'
-import { MesocycleTemplate, TemplateDay, TemplateExercise } from '@/types'
+import { MesocycleTemplate, TemplateDay, TemplateExercise, MuscleGroupPriority } from '@/types'
 
 export interface CreateTemplateData {
   name: string
@@ -9,6 +9,10 @@ export interface CreateTemplateData {
   daysPerWeek: number
   isSpecialization?: boolean
   specializationType?: 'arm_specialization'
+  musclePriorities: {
+    muscleGroupId: string
+    priority: MuscleGroupPriority
+  }[]
   days: {
     dayNumber: number
     name: string
@@ -82,6 +86,21 @@ export async function createMesocycleTemplate(
 
   await Promise.all(dayPromises)
 
+  // Create muscle priorities
+  if (data.musclePriorities && data.musclePriorities.length > 0) {
+    const { error: prioritiesError } = await supabase
+      .from('template_muscle_priorities')
+      .insert(
+        data.musclePriorities.map((mp) => ({
+          template_id: template.id,
+          muscle_group_id: mp.muscleGroupId,
+          priority: mp.priority,
+        }))
+      )
+
+    if (prioritiesError) throw prioritiesError
+  }
+
   // Return the created template
   return {
     id: template.id,
@@ -90,6 +109,7 @@ export async function createMesocycleTemplate(
     daysPerWeek: template.days_per_week,
     isSpecialization: template.is_specialization,
     specializationType: template.specialization_type,
+    musclePriorities: [],
     days: [],
     createdAt: new Date(template.created_at),
   }
@@ -113,6 +133,7 @@ export async function getMesocycleTemplates(): Promise<MesocycleTemplate[]> {
     daysPerWeek: template.days_per_week,
     isSpecialization: template.is_specialization,
     specializationType: template.specialization_type,
+    musclePriorities: [],
     days: [],
     createdAt: new Date(template.created_at),
   }))
@@ -135,6 +156,10 @@ export async function getMesocycleTemplate(
           *,
           exercises (*)
         )
+      ),
+      template_muscle_priorities (
+        *,
+        muscle_groups (*)
       )
     `
     )
@@ -151,6 +176,20 @@ export async function getMesocycleTemplate(
     daysPerWeek: template.days_per_week,
     isSpecialization: template.is_specialization,
     specializationType: template.specialization_type,
+    musclePriorities: (template.template_muscle_priorities || []).map((mp: any) => ({
+      id: mp.id,
+      templateId: mp.template_id,
+      muscleGroupId: mp.muscle_group_id,
+      priority: mp.priority,
+      muscleGroup: mp.muscle_groups
+        ? {
+            id: mp.muscle_groups.id,
+            name: mp.muscle_groups.name,
+            priority: mp.muscle_groups.priority,
+            createdAt: new Date(mp.muscle_groups.created_at),
+          }
+        : undefined,
+    })),
     days: (template.template_days || []).map((day: any) => ({
       id: day.id,
       templateId: day.template_id,
