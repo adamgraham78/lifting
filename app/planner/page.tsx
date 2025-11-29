@@ -9,7 +9,8 @@ import { Calendar, Dumbbell, ArrowRight, Zap, Check, Plus, X, Trash2, ChevronLef
 import { useRouter } from 'next/navigation'
 import { getExercises } from '@/lib/services/exercises'
 import { createMesocycleTemplate, CreateTemplateData } from '@/lib/services/mesocycle-templates'
-import { Exercise } from '@/types'
+import { getMuscleGroups } from '@/lib/services/muscle-groups'
+import { Exercise, MuscleGroup, MuscleGroupPriority } from '@/types'
 
 // Starter templates
 const starterTemplates = [
@@ -52,7 +53,7 @@ const starterTemplates = [
   },
 ]
 
-type PlannerStep = 'config' | 'exercises' | 'schedule'
+type PlannerStep = 'config' | 'priorities' | 'exercises' | 'schedule'
 
 interface DayExercise {
   exerciseId: string
@@ -80,6 +81,10 @@ export default function PlannerPage() {
     durationWeeks: 6,
   })
 
+  // Muscle priority state
+  const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([])
+  const [musclePriorities, setMusclePriorities] = useState<Map<string, MuscleGroupPriority>>(new Map())
+
   // Exercise selection state
   const [availableExercises, setAvailableExercises] = useState<Exercise[]>([])
   const [selectedExercises, setSelectedExercises] = useState<Set<string>>(new Set())
@@ -90,6 +95,13 @@ export default function PlannerPage() {
   const [days, setDays] = useState<Day[]>([])
   const [selectedDay, setSelectedDay] = useState<number>(1)
   const [saving, setSaving] = useState(false)
+
+  // Load muscle groups when moving to priorities step
+  useEffect(() => {
+    if (step === 'priorities' && muscleGroups.length === 0) {
+      loadMuscleGroups()
+    }
+  }, [step])
 
   // Load exercises when moving to exercise selection step
   useEffect(() => {
@@ -112,6 +124,22 @@ export default function PlannerPage() {
       setDays(initialDays)
     }
   }, [step, customConfig.daysPerWeek])
+
+  const loadMuscleGroups = async () => {
+    setLoading(true)
+    try {
+      const groups = await getMuscleGroups()
+      setMuscleGroups(groups)
+      // Initialize all to medium priority
+      const priorities = new Map<string, MuscleGroupPriority>()
+      groups.forEach(group => priorities.set(group.id, 'medium'))
+      setMusclePriorities(priorities)
+    } catch (error) {
+      console.error('Failed to load muscle groups:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadExercises = async () => {
     setLoading(true)
@@ -137,8 +165,16 @@ export default function PlannerPage() {
 
   const handleConfigNext = () => {
     if (customConfig.name.trim()) {
-      setStep('exercises')
+      setStep('priorities')
     }
+  }
+
+  const handlePrioritiesNext = () => {
+    setStep('exercises')
+  }
+
+  const handlePriorityChange = (muscleGroupId: string, priority: MuscleGroupPriority) => {
+    setMusclePriorities(prev => new Map(prev).set(muscleGroupId, priority))
   }
 
   const toggleExercise = (exerciseId: string) => {
@@ -226,6 +262,10 @@ export default function PlannerPage() {
         name: customConfig.name,
         durationWeeks: customConfig.durationWeeks,
         daysPerWeek: customConfig.daysPerWeek,
+        musclePriorities: Array.from(musclePriorities.entries()).map(([muscleGroupId, priority]) => ({
+          muscleGroupId,
+          priority,
+        })),
         days: days.map(day => ({
           dayNumber: day.dayNumber,
           name: day.name,
@@ -268,6 +308,7 @@ export default function PlannerPage() {
           <h1 className="text-display text-accent mb-2">MESOCYCLE PLANNER</h1>
           <p className="text-foreground-secondary">
             {mode === 'custom' && step === 'config' && 'Create a new training program'}
+            {mode === 'custom' && step === 'priorities' && 'Set muscle group priorities for auto-regulation'}
             {mode === 'custom' && step === 'exercises' && 'Select exercises for your program'}
             {mode === 'custom' && step === 'schedule' && 'Assign exercises to training days'}
             {mode === 'template' && 'Choose from starter templates'}
@@ -276,32 +317,41 @@ export default function PlannerPage() {
 
         {/* Step indicator for custom mode */}
         {mode === 'custom' && (
-          <div className="flex items-center justify-center space-x-4 mb-8">
+          <div className="flex items-center justify-center space-x-3 mb-8">
             <div className={`flex items-center ${step === 'config' ? 'text-accent' : 'text-foreground-tertiary'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 step !== 'config' ? 'bg-accent text-background' : 'border-2 border-current'
               }`}>
                 {step !== 'config' ? <Check className="w-5 h-5" /> : '1'}
               </div>
-              <span className="ml-2 font-medium">Configuration</span>
+              <span className="ml-2 font-medium text-sm">Config</span>
             </div>
-            <div className="w-16 h-0.5 bg-foreground-tertiary" />
+            <div className="w-12 h-0.5 bg-foreground-tertiary" />
+            <div className={`flex items-center ${step === 'priorities' ? 'text-accent' : 'text-foreground-tertiary'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                step === 'exercises' || step === 'schedule' ? 'bg-accent text-background' : step === 'priorities' ? 'border-2 border-current' : 'border-2 border-current'
+              }`}>
+                {step === 'exercises' || step === 'schedule' ? <Check className="w-5 h-5" /> : '2'}
+              </div>
+              <span className="ml-2 font-medium text-sm">Priorities</span>
+            </div>
+            <div className="w-12 h-0.5 bg-foreground-tertiary" />
             <div className={`flex items-center ${step === 'exercises' ? 'text-accent' : 'text-foreground-tertiary'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 step === 'schedule' ? 'bg-accent text-background' : step === 'exercises' ? 'border-2 border-current' : 'border-2 border-current'
               }`}>
-                {step === 'schedule' ? <Check className="w-5 h-5" /> : '2'}
+                {step === 'schedule' ? <Check className="w-5 h-5" /> : '3'}
               </div>
-              <span className="ml-2 font-medium">Exercises</span>
+              <span className="ml-2 font-medium text-sm">Exercises</span>
             </div>
-            <div className="w-16 h-0.5 bg-foreground-tertiary" />
+            <div className="w-12 h-0.5 bg-foreground-tertiary" />
             <div className={`flex items-center ${step === 'schedule' ? 'text-accent' : 'text-foreground-tertiary'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 step === 'schedule' ? 'border-2 border-current' : 'border-2 border-current'
               }`}>
-                3
+                4
               </div>
-              <span className="ml-2 font-medium">Schedule</span>
+              <span className="ml-2 font-medium text-sm">Schedule</span>
             </div>
           </div>
         )}
@@ -478,12 +528,100 @@ export default function PlannerPage() {
                     onClick={handleConfigNext}
                     disabled={!customConfig.name.trim()}
                   >
-                    Continue to Exercise Selection
+                    Continue to Muscle Priorities
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </div>
               </div>
             </Card>
+          </div>
+        )}
+
+        {/* Custom Mode - Muscle Priorities Step */}
+        {mode === 'custom' && step === 'priorities' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-foreground">
+                Set Muscle Group Priorities
+              </h2>
+              <Button
+                variant="secondary"
+                onClick={() => setStep('config')}
+              >
+                <ChevronLeft className="w-5 h-5 mr-1" />
+                Back
+              </Button>
+            </div>
+
+            {/* Info card about priorities */}
+            <Card className="mb-6 bg-background-tertiary border-accent">
+              <div className="flex items-start space-x-3">
+                <div className="text-accent text-2xl">ℹ️</div>
+                <div>
+                  <h3 className="font-bold text-foreground mb-2">How Muscle Priority Affects Auto-Regulation</h3>
+                  <ul className="space-y-1 text-sm text-foreground-secondary">
+                    <li><span className="text-accent font-medium">HIGH:</span> Aggressive volume increases when tolerated, adds sets with good pump or easy workload</li>
+                    <li><span className="text-accent font-medium">MEDIUM:</span> Conservative increases, only adds volume if clearly under-stimulated</li>
+                    <li><span className="text-accent font-medium">LOW:</span> Maintenance only, never increases volume, only reduces if needed</li>
+                  </ul>
+                </div>
+              </div>
+            </Card>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-foreground-secondary">Loading muscle groups...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {muscleGroups.map(muscle => (
+                  <Card key={muscle.id}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-foreground uppercase">
+                          {muscle.name}
+                        </h3>
+                        <p className="text-sm text-foreground-tertiary">
+                          Current priority: <span className="text-accent font-medium uppercase">{musclePriorities.get(muscle.id) || 'medium'}</span>
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        {(['high', 'medium', 'low'] as MuscleGroupPriority[]).map(priority => (
+                          <button
+                            key={priority}
+                            onClick={() => handlePriorityChange(muscle.id, priority)}
+                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                              musclePriorities.get(muscle.id) === priority
+                                ? 'bg-accent text-white'
+                                : 'bg-background-tertiary text-foreground-secondary hover:bg-background hover:text-foreground'
+                            }`}
+                          >
+                            {priority.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <Button
+                variant="secondary"
+                onClick={() => setStep('config')}
+              >
+                Back
+              </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handlePrioritiesNext}
+              >
+                Continue to Exercise Selection
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
           </div>
         )}
 
@@ -496,7 +634,7 @@ export default function PlannerPage() {
               </h2>
               <Button
                 variant="secondary"
-                onClick={() => setStep('config')}
+                onClick={() => setStep('priorities')}
               >
                 <ChevronLeft className="w-5 h-5 mr-1" />
                 Back
@@ -549,7 +687,7 @@ export default function PlannerPage() {
             <div className="flex justify-end space-x-3">
               <Button
                 variant="secondary"
-                onClick={() => setStep('config')}
+                onClick={() => setStep('priorities')}
               >
                 Back
               </Button>
