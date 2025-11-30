@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Dumbbell, Calendar, TrendingUp, Settings, LayoutGrid } from 'lucide-react'
+import { ThemeToggle } from './ThemeToggle'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -25,25 +26,28 @@ export function Navigation() {
             <span className="font-display text-2xl text-accent">LIFTING TRACKER</span>
           </Link>
 
-          <div className="flex space-x-1">
-            {navItems.map(item => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-accent text-white'
-                      : 'text-foreground-secondary hover:bg-background-tertiary hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              )
-            })}
+          <div className="flex items-center space-x-4">
+            <div className="flex space-x-1">
+              {navItems.map(item => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-accent text-white'
+                        : 'text-foreground-secondary hover:bg-background-tertiary hover:text-foreground'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </div>
