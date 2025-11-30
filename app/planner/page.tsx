@@ -710,11 +710,11 @@ export default function PlannerPage() {
             </div>
 
             {/* All days content */}
-            <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {days.map((day) => {
                 const totalExercises = day.exerciseCards.reduce((sum, card) => sum + card.exercises.length, 0)
                 return (
-                  <div key={day.dayNumber} className="border-2 border-foreground-tertiary rounded-lg p-6">
+                  <div key={day.dayNumber} className="border-2 border-foreground-tertiary rounded-lg p-6 flex flex-col">
                     {/* Day header */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-4">
