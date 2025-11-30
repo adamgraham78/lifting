@@ -360,8 +360,8 @@ export default function PlannerPage() {
     }
   }
 
-  const availableExercisesForCard = (cardId: string) => {
-    const currentDay = days.find(d => d.dayNumber === selectedDay)
+  const availableExercisesForCard = (dayNumber: number, cardId: string) => {
+    const currentDay = days.find(d => d.dayNumber === dayNumber)
     if (!currentDay) return []
 
     const card = currentDay.exerciseCards.find(c => c.id === cardId)
@@ -709,180 +709,174 @@ export default function PlannerPage() {
               </Button>
             </div>
 
-            {/* Day tabs */}
-            <div className="flex space-x-2 mb-6 overflow-x-auto pb-2">
-              {days.map(day => {
+            {/* All days content */}
+            <div className="space-y-8">
+              {days.map((day) => {
                 const totalExercises = day.exerciseCards.reduce((sum, card) => sum + card.exercises.length, 0)
                 return (
-                  <button
-                    key={day.dayNumber}
-                    onClick={() => setSelectedDay(day.dayNumber)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                      selectedDay === day.dayNumber
-                        ? 'bg-accent text-background'
-                        : 'bg-background-secondary text-foreground hover:bg-background-tertiary'
-                    }`}
-                  >
-                    {day.name} ({totalExercises})
-                  </button>
+                  <div key={day.dayNumber} className="border-2 border-foreground-tertiary rounded-lg p-6">
+                    {/* Day header */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold text-accent">
+                          {day.name} ({totalExercises} {totalExercises === 1 ? 'exercise' : 'exercises'})
+                        </h3>
+                      </div>
+
+                      {/* Day name input */}
+                      <Card className="mb-4">
+                        <Input
+                          label="Day Name"
+                          value={day.name}
+                          onChange={(e) => updateDayName(day.dayNumber, e.target.value)}
+                          placeholder="e.g., Push Day, Leg Day"
+                        />
+                      </Card>
+                    </div>
+
+                    {/* Exercise cards */}
+                    <div className="space-y-4">
+                      {day.exerciseCards.map((card, cardIdx) => {
+                        const muscle = muscleGroups.find(m => m.id === card.muscleGroupId)
+                        return (
+                          <Card key={card.id}>
+                            <div className="space-y-4">
+                              {/* Card header with muscle group selector and delete button */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1 mr-4">
+                                  <Select
+                                    label="Muscle Group"
+                                    options={[
+                                      { value: '', label: 'Select muscle group...' },
+                                      ...muscleGroups.map(mg => ({
+                                        value: mg.id,
+                                        label: mg.name.toUpperCase(),
+                                      }))
+                                    ]}
+                                    value={card.muscleGroupId}
+                                    onChange={(e) => updateCardMuscleGroup(day.dayNumber, card.id, e.target.value)}
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => removeCardFromDay(day.dayNumber, card.id)}
+                                  className="text-foreground-tertiary hover:text-error transition-colors mt-6"
+                                  title="Delete this card"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
+
+                              {/* Exercise selection dropdown */}
+                              {card.muscleGroupId && (
+                                <div>
+                                  <Select
+                                    label="Add Exercise"
+                                    options={[
+                                      { value: '', label: 'Select exercise...' },
+                                      ...availableExercisesForCard(day.dayNumber, card.id).map(ex => ({
+                                        value: ex.id,
+                                        label: ex.name,
+                                      }))
+                                    ]}
+                                    value=""
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        addExerciseToCard(day.dayNumber, card.id, e.target.value)
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {/* List of exercises in this card */}
+                              {card.exercises.length > 0 && (
+                                <div className="space-y-3 pt-2 border-t border-foreground-tertiary">
+                                  <div className="text-sm font-medium text-foreground-secondary">
+                                    {muscle?.name.toUpperCase()} Exercises ({card.exercises.length})
+                                  </div>
+                                  {card.exercises.map((ex, idx) => (
+                                    <div
+                                      key={ex.exerciseId}
+                                      className="bg-background-secondary rounded-lg p-4"
+                                    >
+                                      <div className="flex items-start justify-between mb-3">
+                                        <div className="flex-1">
+                                          <div className="font-medium text-foreground">
+                                            {idx + 1}. {ex.exercise.name}
+                                          </div>
+                                          <div className="text-xs text-foreground-secondary mt-1">
+                                            {ex.exercise.equipment} • {ex.exercise.movementPattern}
+                                          </div>
+                                        </div>
+                                        <button
+                                          onClick={() => removeExerciseFromCard(day.dayNumber, card.id, ex.exerciseId)}
+                                          className="text-foreground-tertiary hover:text-error transition-colors"
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </button>
+                                      </div>
+
+                                      <div className="flex items-center space-x-4">
+                                        <div className="flex items-center space-x-2">
+                                          <label className="text-xs text-foreground-secondary">Sets:</label>
+                                          <div className="flex items-center space-x-1">
+                                            <button
+                                              onClick={() => updateExerciseSets(day.dayNumber, card.id, ex.exerciseId, ex.sets - 1)}
+                                              className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
+                                            >
+                                              -
+                                            </button>
+                                            <span className="w-8 text-center font-medium text-foreground">
+                                              {ex.sets}
+                                            </span>
+                                            <button
+                                              onClick={() => updateExerciseSets(day.dayNumber, card.id, ex.exerciseId, ex.sets + 1)}
+                                              className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
+                                            >
+                                              +
+                                            </button>
+                                          </div>
+                                        </div>
+                                        <div className="text-xs text-foreground-secondary">
+                                          {ex.repRangeMin}-{ex.repRangeMax} reps • {ex.restSeconds}s rest
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {!card.muscleGroupId && (
+                                <div className="text-center py-4 text-foreground-secondary text-sm">
+                                  Select a muscle group to see available exercises
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        )
+                      })}
+
+                      {/* Add new card button */}
+                      <button
+                        onClick={() => addCardToDay(day.dayNumber)}
+                        className="w-full border-2 border-dashed border-foreground-tertiary hover:border-accent hover:bg-background-secondary rounded-lg p-6 transition-colors group"
+                      >
+                        <div className="flex items-center justify-center space-x-2 text-foreground-secondary group-hover:text-accent">
+                          <Plus className="w-5 h-5" />
+                          <span className="font-medium">Add Muscle Group Card</span>
+                        </div>
+                      </button>
+
+                      {day.exerciseCards.length === 0 && (
+                        <div className="text-center py-12 text-foreground-secondary">
+                          No exercise cards yet. Click &quot;Add Muscle Group Card&quot; to get started.
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )
               })}
             </div>
-
-            {/* Selected day content */}
-            {days.find(d => d.dayNumber === selectedDay) && (
-              <div>
-                {/* Day name input */}
-                <Card className="mb-6">
-                  <Input
-                    label="Day Name"
-                    value={days.find(d => d.dayNumber === selectedDay)?.name || ''}
-                    onChange={(e) => updateDayName(selectedDay, e.target.value)}
-                    placeholder="e.g., Push Day, Leg Day"
-                  />
-                </Card>
-
-                {/* Exercise cards */}
-                <div className="space-y-4">
-                  {days.find(d => d.dayNumber === selectedDay)?.exerciseCards.map((card, cardIdx) => {
-                    const muscle = muscleGroups.find(m => m.id === card.muscleGroupId)
-                    return (
-                      <Card key={card.id}>
-                        <div className="space-y-4">
-                          {/* Card header with muscle group selector and delete button */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1 mr-4">
-                              <Select
-                                label="Muscle Group"
-                                options={[
-                                  { value: '', label: 'Select muscle group...' },
-                                  ...muscleGroups.map(mg => ({
-                                    value: mg.id,
-                                    label: mg.name.toUpperCase(),
-                                  }))
-                                ]}
-                                value={card.muscleGroupId}
-                                onChange={(e) => updateCardMuscleGroup(selectedDay, card.id, e.target.value)}
-                              />
-                            </div>
-                            <button
-                              onClick={() => removeCardFromDay(selectedDay, card.id)}
-                              className="text-foreground-tertiary hover:text-error transition-colors mt-6"
-                              title="Delete this card"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-
-                          {/* Exercise selection dropdown */}
-                          {card.muscleGroupId && (
-                            <div>
-                              <Select
-                                label="Add Exercise"
-                                options={[
-                                  { value: '', label: 'Select exercise...' },
-                                  ...availableExercisesForCard(card.id).map(ex => ({
-                                    value: ex.id,
-                                    label: ex.name,
-                                  }))
-                                ]}
-                                value=""
-                                onChange={(e) => {
-                                  if (e.target.value) {
-                                    addExerciseToCard(selectedDay, card.id, e.target.value)
-                                  }
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {/* List of exercises in this card */}
-                          {card.exercises.length > 0 && (
-                            <div className="space-y-3 pt-2 border-t border-foreground-tertiary">
-                              <div className="text-sm font-medium text-foreground-secondary">
-                                {muscle?.name.toUpperCase()} Exercises ({card.exercises.length})
-                              </div>
-                              {card.exercises.map((ex, idx) => (
-                                <div
-                                  key={ex.exerciseId}
-                                  className="bg-background-secondary rounded-lg p-4"
-                                >
-                                  <div className="flex items-start justify-between mb-3">
-                                    <div className="flex-1">
-                                      <div className="font-medium text-foreground">
-                                        {idx + 1}. {ex.exercise.name}
-                                      </div>
-                                      <div className="text-xs text-foreground-secondary mt-1">
-                                        {ex.exercise.equipment} • {ex.exercise.movementPattern}
-                                      </div>
-                                    </div>
-                                    <button
-                                      onClick={() => removeExerciseFromCard(selectedDay, card.id, ex.exerciseId)}
-                                      className="text-foreground-tertiary hover:text-error transition-colors"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </div>
-
-                                  <div className="flex items-center space-x-4">
-                                    <div className="flex items-center space-x-2">
-                                      <label className="text-xs text-foreground-secondary">Sets:</label>
-                                      <div className="flex items-center space-x-1">
-                                        <button
-                                          onClick={() => updateExerciseSets(selectedDay, card.id, ex.exerciseId, ex.sets - 1)}
-                                          className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
-                                        >
-                                          -
-                                        </button>
-                                        <span className="w-8 text-center font-medium text-foreground">
-                                          {ex.sets}
-                                        </span>
-                                        <button
-                                          onClick={() => updateExerciseSets(selectedDay, card.id, ex.exerciseId, ex.sets + 1)}
-                                          className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
-                                        >
-                                          +
-                                        </button>
-                                      </div>
-                                    </div>
-                                    <div className="text-xs text-foreground-secondary">
-                                      {ex.repRangeMin}-{ex.repRangeMax} reps • {ex.restSeconds}s rest
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {!card.muscleGroupId && (
-                            <div className="text-center py-4 text-foreground-secondary text-sm">
-                              Select a muscle group to see available exercises
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    )
-                  })}
-
-                  {/* Add new card button */}
-                  <button
-                    onClick={() => addCardToDay(selectedDay)}
-                    className="w-full border-2 border-dashed border-foreground-tertiary hover:border-accent hover:bg-background-secondary rounded-lg p-6 transition-colors group"
-                  >
-                    <div className="flex items-center justify-center space-x-2 text-foreground-secondary group-hover:text-accent">
-                      <Plus className="w-5 h-5" />
-                      <span className="font-medium">Add Muscle Group Card</span>
-                    </div>
-                  </button>
-
-                  {days.find(d => d.dayNumber === selectedDay)?.exerciseCards.length === 0 && (
-                    <div className="text-center py-12 text-foreground-secondary">
-                      No exercise cards yet. Click &quot;Add Muscle Group Card&quot; to get started.
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             <div className="flex justify-end space-x-3 mt-6">
               <Button
