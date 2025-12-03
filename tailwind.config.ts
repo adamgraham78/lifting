@@ -6,24 +6,24 @@ const config: Config = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Utilitarian fitness aesthetic - dark with strong accents
         background: {
-          DEFAULT: '#0a0a0a',
-          secondary: '#171717',
-          tertiary: '#262626',
+          DEFAULT: 'var(--background)',
+          secondary: 'var(--background-secondary)',
+          tertiary: 'var(--background-tertiary)',
         },
         foreground: {
-          DEFAULT: '#fafafa',
-          secondary: '#a3a3a3',
-          tertiary: '#737373',
+          DEFAULT: 'var(--foreground)',
+          secondary: 'var(--foreground-secondary)',
+          tertiary: 'var(--foreground-tertiary)',
         },
         accent: {
-          DEFAULT: '#ea580c', // Strong orange for intensity
-          hover: '#c2410c',
-          light: '#fb923c',
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          light: 'var(--accent-light)',
         },
         success: '#22c55e',
         warning: '#eab308',
