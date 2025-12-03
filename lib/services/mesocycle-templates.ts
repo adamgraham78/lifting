@@ -46,7 +46,9 @@ export async function createMesocycleTemplate(
     .select()
     .single()
 
-  if (templateError) throw templateError
+  if (templateError) {
+    throw new Error(`Failed to create template: ${templateError.message || JSON.stringify(templateError)}`)
+  }
 
   // Create template days
   const dayPromises = data.days.map(async (day) => {
@@ -60,7 +62,9 @@ export async function createMesocycleTemplate(
       .select()
       .single()
 
-    if (dayError) throw dayError
+    if (dayError) {
+      throw new Error(`Failed to create template day ${day.dayNumber}: ${dayError.message || JSON.stringify(dayError)}`)
+    }
 
     // Create exercises for this day
     if (day.exercises.length > 0) {
@@ -78,7 +82,9 @@ export async function createMesocycleTemplate(
           }))
         )
 
-      if (exercisesError) throw exercisesError
+      if (exercisesError) {
+        throw new Error(`Failed to create exercises for day ${day.dayNumber}: ${exercisesError.message || JSON.stringify(exercisesError)}`)
+      }
     }
 
     return templateDay
@@ -98,7 +104,9 @@ export async function createMesocycleTemplate(
         }))
       )
 
-    if (prioritiesError) throw prioritiesError
+    if (prioritiesError) {
+      throw new Error(`Failed to create muscle priorities: ${prioritiesError.message || JSON.stringify(prioritiesError)}`)
+    }
   }
 
   // Return the created template

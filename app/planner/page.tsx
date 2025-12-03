@@ -354,7 +354,9 @@ export default function PlannerPage() {
       router.push('/')
     } catch (error) {
       console.error('Failed to save template:', error)
-      alert('Failed to save template. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      console.error('Error details:', errorMessage)
+      alert(`Failed to save template: ${errorMessage}. Please try again.`)
     } finally {
       setSaving(false)
     }
