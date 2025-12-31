@@ -10,7 +10,7 @@ export default function WorkoutPage() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-display text-accent mb-2">WORKOUT</h1>
+          <h1 className="text-display text-accent mb-2">Workout</h1>
           <p className="text-foreground-secondary">
             Log your training sessions
           </p>
