@@ -384,7 +384,7 @@ export default function PlannerPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-display text-accent mb-2">MESOCYCLE PLANNER</h1>
+          <h1 className="text-display text-accent mb-2">Mesocycle Planner</h1>
           <p className="text-foreground-secondary">
             {mode === 'custom' && step === 'config' && 'Create a new training program'}
             {mode === 'custom' && step === 'priorities' && 'Set muscle group priorities for auto-regulation'}
@@ -647,11 +647,11 @@ export default function PlannerPage() {
                   <Card key={muscle.id}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-bold text-foreground uppercase">
+                        <h3 className="text-lg font-bold text-foreground">
                           {muscle.name}
                         </h3>
                         <p className="text-sm text-foreground-tertiary">
-                          Current priority: <span className="text-accent font-medium uppercase">{musclePriorities.get(muscle.id) || 'medium'}</span>
+                          Current priority: <span className="text-accent font-medium">{(musclePriorities.get(muscle.id) || 'medium').charAt(0).toUpperCase() + (musclePriorities.get(muscle.id) || 'medium').slice(1)}</span>
                         </p>
                       </div>
                       <div className="flex space-x-2">
@@ -665,7 +665,7 @@ export default function PlannerPage() {
                                 : 'bg-background-tertiary text-foreground-secondary hover:bg-background hover:text-foreground'
                             }`}
                           >
-                            {priority.toUpperCase()}
+                            {priority.charAt(0).toUpperCase() + priority.slice(1)}
                           </button>
                         ))}
                       </div>
@@ -752,7 +752,7 @@ export default function PlannerPage() {
                                         { value: '', label: 'Select muscle group...' },
                                         ...muscleGroups.map(mg => ({
                                           value: mg.id,
-                                          label: mg.name.toUpperCase(),
+                                          label: mg.name,
                                         }))
                                       ]}
                                       value={card.muscleGroupId}
@@ -762,7 +762,7 @@ export default function PlannerPage() {
                                     <div>
                                       <label className="text-sm text-foreground-secondary mb-1 block">Muscle Group</label>
                                       <div className="flex items-center justify-between bg-background-secondary border border-foreground-tertiary rounded-lg px-4 py-2">
-                                        <span className="font-bold text-accent uppercase">
+                                        <span className="font-bold text-accent">
                                           {muscleGroups.find(m => m.id === card.muscleGroupId)?.name}
                                         </span>
                                         {card.exercises.length === 0 && (
@@ -812,7 +812,7 @@ export default function PlannerPage() {
                               {card.exercises.length > 0 && (
                                 <div className="space-y-3 pt-2 border-t border-foreground-tertiary">
                                   <div className="text-sm font-medium text-foreground-secondary">
-                                    {muscle?.name.toUpperCase()} Exercises ({card.exercises.length})
+                                    {muscle?.name} Exercises ({card.exercises.length})
                                   </div>
                                   {card.exercises.map((ex, idx) => (
                                     <div

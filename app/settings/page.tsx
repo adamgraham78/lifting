@@ -9,7 +9,7 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-display text-accent mb-2">SETTINGS</h1>
+          <h1 className="text-display text-accent mb-2">Settings</h1>
           <p className="text-foreground-secondary">
             Manage your training preferences
           </p>

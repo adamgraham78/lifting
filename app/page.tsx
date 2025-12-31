@@ -15,7 +15,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-display text-accent mb-2">
-            DASHBOARD
+            Dashboard
           </h1>
           <p className="text-xl text-foreground-secondary">
             RP-Style Auto-Regulation Training System
@@ -95,19 +95,19 @@ export default function Home() {
         {/* Training Philosophy */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
-            <h3 className="text-2xl font-bold mb-2 text-accent font-display">TRACK</h3>
+            <h3 className="text-2xl font-bold mb-2 text-accent font-display">Track</h3>
             <p className="text-foreground-secondary">
               Log every set, rep, and weight with precision. Build a comprehensive training history.
             </p>
           </Card>
           <Card>
-            <h3 className="text-2xl font-bold mb-2 text-accent font-display">REGULATE</h3>
+            <h3 className="text-2xl font-bold mb-2 text-accent font-display">Regulate</h3>
             <p className="text-foreground-secondary">
               Auto-adjust volume based on feedback. Find your optimal training stimulus.
             </p>
           </Card>
           <Card>
-            <h3 className="text-2xl font-bold mb-2 text-accent font-display">GROW</h3>
+            <h3 className="text-2xl font-bold mb-2 text-accent font-display">Grow</h3>
             <p className="text-foreground-secondary">
               Progressive overload with intelligent recovery. Maximize hypertrophy gains.
             </p>

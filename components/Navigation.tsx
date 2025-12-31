@@ -23,7 +23,7 @@ export function Navigation() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center space-x-2">
             <Dumbbell className="w-8 h-8 text-accent" />
-            <span className="font-display text-2xl text-accent">LIFTING TRACKER</span>
+            <span className="font-display text-2xl text-accent">Lifting Tracker</span>
           </Link>
 
           <div className="flex items-center space-x-4">

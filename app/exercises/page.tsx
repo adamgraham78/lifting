@@ -51,7 +51,7 @@ export default function ExercisesPage() {
 
   const muscleOptions = [
     { value: '', label: 'All Muscles' },
-    ...muscleGroups.map(mg => ({ value: mg.id, label: mg.name.toUpperCase() })),
+    ...muscleGroups.map(mg => ({ value: mg.id, label: mg.name })),
   ]
 
   return (
@@ -60,7 +60,7 @@ export default function ExercisesPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-display text-accent mb-2">EXERCISE LIBRARY</h1>
+            <h1 className="text-display text-accent mb-2">Exercise Library</h1>
             <p className="text-foreground-secondary">
               {exercises.length} exercises available
             </p>
@@ -114,7 +114,7 @@ export default function ExercisesPage() {
                     <h3 className="text-lg font-bold text-foreground mb-1">
                       {exercise.name}
                     </h3>
-                    <p className="text-sm text-accent uppercase font-medium">
+                    <p className="text-sm text-accent font-medium">
                       {getMuscleGroupName(exercise.primaryMuscle)}
                     </p>
                   </div>
