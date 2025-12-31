@@ -353,8 +353,9 @@ export default function PlannerPage() {
       alert('Template created successfully!')
       router.push('/')
     } catch (error) {
-      console.error('Failed to save template:', error)
-      alert('Failed to save template. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('Failed to save template:', errorMessage, error)
+      alert(`Failed to save template: ${errorMessage}. Please try again.`)
     } finally {
       setSaving(false)
     }
@@ -744,18 +745,37 @@ export default function PlannerPage() {
                               {/* Card header with muscle group selector and delete button */}
                               <div className="flex items-center justify-between">
                                 <div className="flex-1 mr-4">
-                                  <Select
-                                    label="Muscle Group"
-                                    options={[
-                                      { value: '', label: 'Select muscle group...' },
-                                      ...muscleGroups.map(mg => ({
-                                        value: mg.id,
-                                        label: mg.name.toUpperCase(),
-                                      }))
-                                    ]}
-                                    value={card.muscleGroupId}
-                                    onChange={(e) => updateCardMuscleGroup(day.dayNumber, card.id, e.target.value)}
-                                  />
+                                  {!card.muscleGroupId ? (
+                                    <Select
+                                      label="Muscle Group"
+                                      options={[
+                                        { value: '', label: 'Select muscle group...' },
+                                        ...muscleGroups.map(mg => ({
+                                          value: mg.id,
+                                          label: mg.name.toUpperCase(),
+                                        }))
+                                      ]}
+                                      value={card.muscleGroupId}
+                                      onChange={(e) => updateCardMuscleGroup(day.dayNumber, card.id, e.target.value)}
+                                    />
+                                  ) : (
+                                    <div>
+                                      <label className="text-sm text-foreground-secondary mb-1 block">Muscle Group</label>
+                                      <div className="flex items-center justify-between bg-background-secondary border border-foreground-tertiary rounded-lg px-4 py-2">
+                                        <span className="font-bold text-accent uppercase">
+                                          {muscleGroups.find(m => m.id === card.muscleGroupId)?.name}
+                                        </span>
+                                        {card.exercises.length === 0 && (
+                                          <button
+                                            onClick={() => updateCardMuscleGroup(day.dayNumber, card.id, '')}
+                                            className="text-xs text-foreground-tertiary hover:text-accent transition-colors"
+                                          >
+                                            Change
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                                 <button
                                   onClick={() => removeCardFromDay(day.dayNumber, card.id)}
@@ -766,9 +786,9 @@ export default function PlannerPage() {
                                 </button>
                               </div>
 
-                              {/* Exercise selection dropdown */}
+                              {/* Exercise selection dropdown - only show after muscle group is selected */}
                               {card.muscleGroupId && (
-                                <div>
+                                <div className="pt-2 border-t border-foreground-tertiary">
                                   <Select
                                     label="Add Exercise"
                                     options={[
@@ -816,29 +836,24 @@ export default function PlannerPage() {
                                         </button>
                                       </div>
 
-                                      <div className="flex items-center space-x-4">
-                                        <div className="flex items-center space-x-2">
-                                          <label className="text-xs text-foreground-secondary">Sets:</label>
-                                          <div className="flex items-center space-x-1">
-                                            <button
-                                              onClick={() => updateExerciseSets(day.dayNumber, card.id, ex.exerciseId, ex.sets - 1)}
-                                              className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
-                                            >
-                                              -
-                                            </button>
-                                            <span className="w-8 text-center font-medium text-foreground">
-                                              {ex.sets}
-                                            </span>
-                                            <button
-                                              onClick={() => updateExerciseSets(day.dayNumber, card.id, ex.exerciseId, ex.sets + 1)}
-                                              className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
-                                            >
-                                              +
-                                            </button>
-                                          </div>
-                                        </div>
-                                        <div className="text-xs text-foreground-secondary">
-                                          {ex.repRangeMin}-{ex.repRangeMax} reps • {ex.restSeconds}s rest
+                                      <div className="flex items-center space-x-2">
+                                        <label className="text-xs text-foreground-secondary">Sets:</label>
+                                        <div className="flex items-center space-x-1">
+                                          <button
+                                            onClick={() => updateExerciseSets(day.dayNumber, card.id, ex.exerciseId, ex.sets - 1)}
+                                            className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
+                                          >
+                                            -
+                                          </button>
+                                          <span className="w-8 text-center font-medium text-foreground">
+                                            {ex.sets}
+                                          </span>
+                                          <button
+                                            onClick={() => updateExerciseSets(day.dayNumber, card.id, ex.exerciseId, ex.sets + 1)}
+                                            className="w-6 h-6 rounded bg-background-tertiary hover:bg-accent hover:text-background transition-colors flex items-center justify-center"
+                                          >
+                                            +
+                                          </button>
                                         </div>
                                       </div>
                                     </div>
