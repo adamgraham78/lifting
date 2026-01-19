@@ -1,150 +1,111 @@
-// Exercise Database Service
-
 import { supabase } from '@/lib/supabase'
-import { Exercise, ExerciseRow, MuscleGroup } from '@/types'
-import { convertExercise } from '@/lib/utils/converters'
+import type { Exercise, ExerciseRow } from '@/types'
 
-export interface ExerciseFilters {
-  primaryMuscle?: string
-  equipment?: string
-  movementPattern?: string
-  search?: string
-}
+export async function loadExercisesFromCSV(userId: string): Promise<{ success: boolean; error?: Error }> {
+  try {
+    // Check if user already has exercises
+    const { data: existingExercises, error: checkError } = await supabase
+      .from('exercises')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1)
 
-/**
- * Get all exercises with optional filtering
- */
-export async function getExercises(filters?: ExerciseFilters): Promise<Exercise[]> {
-  let query = supabase
-    .from('exercises')
-    .select('*')
-    .order('name', { ascending: true })
+    if (checkError) {
+      return { success: false, error: checkError }
+    }
 
-  if (filters?.primaryMuscle) {
-    query = query.eq('primary_muscle', filters.primaryMuscle)
-  }
+    if (existingExercises && existingExercises.length > 0) {
+      // User already has exercises loaded
+      return { success: true }
+    }
 
-  if (filters?.equipment) {
-    query = query.eq('equipment', filters.equipment)
-  }
+    // Fetch CSV from public directory
+    const response = await fetch('/exercises.csv')
+    if (!response.ok) {
+      return { success: false, error: new Error('Failed to load exercises CSV') }
+    }
 
-  if (filters?.movementPattern) {
-    query = query.eq('movement_pattern', filters.movementPattern)
-  }
+    const csvText = await response.text()
+    const lines = csvText.trim().split('\n')
 
-  if (filters?.search) {
-    query = query.ilike('name', `%${filters.search}%`)
-  }
+    // Skip header row
+    const exercisesToInsert = lines.slice(1).map((line) => {
+      const [_id, name, dayNumber, orderInDay, equipment, defaultSets, notes] = line.split(',')
 
-  const { data, error } = await query
-
-  if (error) throw error
-  return (data as ExerciseRow[]).map(convertExercise)
-}
-
-/**
- * Get a single exercise by ID
- */
-export async function getExercise(id: string): Promise<Exercise | null> {
-  const { data, error } = await supabase
-    .from('exercises')
-    .select('*')
-    .eq('id', id)
-    .single()
-
-  if (error) throw error
-  return data ? convertExercise(data as ExerciseRow) : null
-}
-
-/**
- * Create a new exercise
- */
-export async function createExercise(
-  exercise: Omit<Exercise, 'id' | 'createdAt'>
-): Promise<Exercise> {
-  const { data, error } = await supabase
-    .from('exercises')
-    .insert({
-      name: exercise.name,
-      primary_muscle: exercise.primaryMuscle,
-      secondary_muscles: exercise.secondaryMuscles,
-      equipment: exercise.equipment,
-      movement_pattern: exercise.movementPattern,
-      notes: exercise.notes,
+      return {
+        user_id: userId,
+        name: name?.trim(),
+        day_number: parseInt(dayNumber, 10),
+        order_in_day: parseInt(orderInDay, 10),
+        equipment: equipment?.trim(),
+        default_sets: parseInt(defaultSets, 10),
+        notes: notes?.trim() || '',
+      }
     })
-    .select()
-    .single()
 
-  if (error) throw error
-  return convertExercise(data as ExerciseRow)
+    // Insert all exercises
+    const { error: insertError } = await supabase.from('exercises').insert(exercisesToInsert)
+
+    if (insertError) {
+      return { success: false, error: insertError }
+    }
+
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error : new Error('Failed to load exercises') }
+  }
 }
 
-/**
- * Update an exercise
- */
-export async function updateExercise(
-  id: string,
-  updates: Partial<Omit<Exercise, 'id' | 'createdAt'>>
-): Promise<Exercise> {
-  const updateData: any = {}
-
-  if (updates.name !== undefined) updateData.name = updates.name
-  if (updates.primaryMuscle !== undefined) updateData.primary_muscle = updates.primaryMuscle
-  if (updates.secondaryMuscles !== undefined) updateData.secondary_muscles = updates.secondaryMuscles
-  if (updates.equipment !== undefined) updateData.equipment = updates.equipment
-  if (updates.movementPattern !== undefined) updateData.movement_pattern = updates.movementPattern
-  if (updates.notes !== undefined) updateData.notes = updates.notes
-
-  const { data, error } = await supabase
-    .from('exercises')
-    .update(updateData)
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) throw error
-  return convertExercise(data as ExerciseRow)
+function convertRow(row: ExerciseRow): Exercise {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    dayNumber: row.day_number as 1 | 2 | 3 | 4 | 5 | 6,
+    orderInDay: row.order_in_day as 1 | 2 | 3 | 4 | 5,
+    equipment: row.equipment,
+    defaultSets: row.default_sets,
+    notes: row.notes,
+    createdAt: new Date(row.created_at),
+  }
 }
 
-/**
- * Delete an exercise (soft delete - just remove, history preserved in workout_sets)
- */
-export async function deleteExercise(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('exercises')
-    .delete()
-    .eq('id', id)
+export async function getExercisesForDay(userId: string, dayNumber: number): Promise<Exercise[]> {
+  try {
+    const { data, error } = await supabase
+      .from('exercises')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('day_number', dayNumber)
+      .order('order_in_day', { ascending: true })
 
-  if (error) throw error
+    if (error) {
+      throw error
+    }
+
+    return (data as ExerciseRow[]).map(convertRow)
+  } catch (error) {
+    console.error('Failed to get exercises for day:', error)
+    return []
+  }
 }
 
-/**
- * Get exercise history (all sets ever logged)
- */
-export async function getExerciseHistory(exerciseId: string) {
-  const { data, error } = await supabase
-    .from('workout_sets')
-    .select(`
-      *,
-      session:workout_sessions(date, week)
-    `)
-    .eq('exercise_id', exerciseId)
-    .order('created_at', { ascending: false })
+export async function getAllExercises(userId: string): Promise<Exercise[]> {
+  try {
+    const { data, error } = await supabase
+      .from('exercises')
+      .select('*')
+      .eq('user_id', userId)
+      .order('day_number', { ascending: true })
+      .order('order_in_day', { ascending: true })
 
-  if (error) throw error
-  return data
-}
+    if (error) {
+      throw error
+    }
 
-/**
- * Get exercises by muscle group
- */
-export async function getExercisesByMuscleGroup(muscleGroupId: string): Promise<Exercise[]> {
-  const { data, error } = await supabase
-    .from('exercises')
-    .select('*')
-    .eq('primary_muscle', muscleGroupId)
-    .order('name', { ascending: true })
-
-  if (error) throw error
-  return (data as ExerciseRow[]).map(convertExercise)
+    return (data as ExerciseRow[]).map(convertRow)
+  } catch (error) {
+    console.error('Failed to get all exercises:', error)
+    return []
+  }
 }

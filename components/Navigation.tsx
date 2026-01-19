@@ -2,52 +2,60 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Dumbbell, Calendar, TrendingUp, Settings, LayoutGrid } from 'lucide-react'
+import { Home, TrendingUp, Settings, Dumbbell } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
-
-const navItems = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/planner', label: 'Planner', icon: LayoutGrid },
-  { href: '/exercises', label: 'Exercises', icon: Dumbbell },
-  { href: '/workout', label: 'Workout', icon: Calendar },
-  { href: '/analytics', label: 'Analytics', icon: TrendingUp },
-  { href: '/settings', label: 'Settings', icon: Settings },
-]
+import { useAuth } from '@/lib/contexts/auth-context'
+import { Button } from '@/components/ui/Button'
 
 export function Navigation() {
   const pathname = usePathname()
+  const { user } = useAuth()
+
+  // Hide navigation on auth pages
+  const isAuthPage = pathname.startsWith('/auth')
+
+  if (isAuthPage || !user) {
+    return null
+  }
+
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/dashboard/progression', label: 'Progression', icon: TrendingUp },
+    { href: '/settings', label: 'Settings', icon: Settings },
+  ]
 
   return (
-    <nav className="bg-background-secondary border-b border-foreground-tertiary">
+    <nav className="border-b border-border bg-card">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center space-x-2">
-            <Dumbbell className="w-8 h-8 text-accent" />
-            <span className="font-display text-2xl text-accent">Lifting Tracker</span>
+          <Link href="/dashboard" className="flex items-center space-x-2">
+            <Dumbbell className="w-6 h-6 text-primary" />
+            <span className="text-xl font-bold">Lifting</span>
           </Link>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex space-x-1">
-              {navItems.map(item => {
-                const Icon = item.icon
-                const isActive = pathname === item.href
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-accent text-white'
-                        : 'text-foreground-secondary hover:bg-background-tertiary hover:text-foreground'
-                    }`}
+          <div className="flex items-center space-x-1">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive =
+                pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/dashboard')
+
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant={isActive ? 'default' : 'ghost'}
+                    size="sm"
+                    className="gap-2"
                   >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                )
-              })}
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden md:inline">{item.label}</span>
+                  </Button>
+                </Link>
+              )
+            })}
+
+            <div className="ml-2 border-l border-border pl-2">
+              <ThemeToggle />
             </div>
-            <ThemeToggle />
           </div>
         </div>
       </div>

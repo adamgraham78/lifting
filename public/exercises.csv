@@ -1,0 +1,31 @@
+exercise_id,exercise_name,day_number,order_in_day,equipment,default_sets,notes
+1,Barbell Bench Press,1,1,barbell,3,Main compound
+2,Incline Dumbbell Press,1,2,dumbbell,3,Secondary compound
+3,Machine Chest Fly,1,3,machine,2,Isolation
+4,Cable Fly,1,4,cable,2,Isolation
+5,Tricep Rope Pushdown,1,5,cable,3,Isolation
+6,Barbell Squat,2,1,barbell,3,Main compound
+7,Leg Press,2,2,machine,3,Secondary compound
+8,Leg Curl,2,3,machine,3,Isolation
+9,Leg Extension,2,4,machine,2,Isolation
+10,Calf Raise,2,5,machine,3,Isolation
+11,Deadlift,3,1,barbell,3,Main compound
+12,Barbell Row,3,2,barbell,3,Secondary compound
+13,Lat Pulldown,3,3,cable,2,Isolation
+14,Seated Row,3,4,machine,2,Isolation
+15,Face Pull,3,5,cable,3,Isolation
+16,Dumbbell Bench Press,4,1,dumbbell,3,Main compound
+17,Incline Barbell Bench,4,2,barbell,3,Secondary compound
+18,Pec Deck,4,3,machine,2,Isolation
+19,Dumbbell Fly,4,4,dumbbell,2,Isolation
+20,Overhead Tricep Extension,4,5,dumbbell,3,Isolation
+21,Romanian Deadlift,5,1,barbell,3,Main compound
+22,Leg Press,5,2,machine,3,Secondary compound
+23,Leg Curl,5,3,machine,3,Isolation
+24,Hack Squat,5,4,machine,2,Isolation
+25,Leg Press Calf Raise,5,5,machine,3,Isolation
+26,Pendulum Squat,6,1,machine,3,Main compound
+27,Barbell Row,6,2,barbell,3,Secondary compound
+28,T-Bar Row,6,3,machine,2,Isolation
+29,Cable Row,6,4,cable,2,Isolation
+30,Reverse Pec Deck,6,5,machine,3,Isolation

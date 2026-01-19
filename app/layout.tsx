@@ -3,12 +3,13 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Navigation } from '@/components/Navigation'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import { AuthProvider } from '@/lib/contexts/auth-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Lifting Tracker - RP-Style Auto-Regulation',
-  description: 'Personal hypertrophy training tracker with intelligent volume auto-regulation',
+  title: 'Lifting Tracker',
+  description: 'Simple 6-day lifting tracker with 5-week progression',
   manifest: '/manifest.json',
 }
 
@@ -25,8 +26,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
-          <Navigation />
-          {children}
+          <AuthProvider>
+            <Navigation />
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
