@@ -1,6 +1,12 @@
 import { supabase } from '@/lib/supabase'
 import type { Exercise, ExerciseRow } from '@/types'
 
+export interface ExerciseFilters {
+  search?: string
+  muscleGroupId?: string
+  equipment?: string
+}
+
 export async function loadExercisesFromCSV(userId: string): Promise<{ success: boolean; error?: Error }> {
   try {
     // Check if user already has exercises
@@ -106,6 +112,49 @@ export async function getAllExercises(userId: string): Promise<Exercise[]> {
     return (data as ExerciseRow[]).map(convertRow)
   } catch (error) {
     console.error('Failed to get all exercises:', error)
+    return []
+  }
+}
+
+/**
+ * Get exercises with optional filters (uses current authenticated user)
+ */
+export async function getExercises(filters?: ExerciseFilters): Promise<Exercise[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      console.error('No authenticated user')
+      return []
+    }
+
+    let query = supabase
+      .from('exercises')
+      .select('*')
+      .eq('user_id', user.id)
+
+    if (filters?.muscleGroupId) {
+      query = query.eq('muscle_group_id', filters.muscleGroupId)
+    }
+
+    if (filters?.equipment) {
+      query = query.eq('equipment', filters.equipment)
+    }
+
+    if (filters?.search) {
+      query = query.ilike('name', `%${filters.search}%`)
+    }
+
+    const { data, error } = await query
+      .order('name', { ascending: true })
+
+    if (error) {
+      throw error
+    }
+
+    return (data as ExerciseRow[]).map(convertRow)
+  } catch (error) {
+    console.error('Failed to get exercises:', error)
     return []
   }
 }

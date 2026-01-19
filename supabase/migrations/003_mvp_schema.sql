@@ -17,9 +17,6 @@ DROP TABLE IF EXISTS muscle_groups CASCADE;
 -- Enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Enable RLS
-ALTER SYSTEM SET default_transaction_isolation = 'read committed';
-
 -- ============================================================================
 -- Exercises Table (CSV-loaded)
 -- ============================================================================

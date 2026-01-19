@@ -194,7 +194,7 @@ export default function DashboardPage() {
 
                 {cycle.currentWeek === 5 && cycle.status === 'active' && (
                   <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
-                    You've completed your final week! You can now restart training with increased volume.
+                    You&apos;ve completed your final week! You can now restart training with increased volume.
                   </p>
                 )}
               </div>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Link href="/dashboard/today" className="flex-1">
                   <Button variant="secondary" className="w-full">
-                    Today's Workout
+                    Today&apos;s Workout
                   </Button>
                 </Link>
 
@@ -342,11 +342,11 @@ export default function DashboardPage() {
             <h3 className="text-xl font-bold mb-4">Congratulations!</h3>
 
             <p className="text-muted-foreground mb-6">
-              You've completed your 5-week training cycle! Ready to start a new cycle with increased volume?
+              You&apos;ve completed your 5-week training cycle! Ready to start a new cycle with increased volume?
             </p>
 
             <p className="text-sm bg-blue-500/10 border border-blue-500 text-blue-700 dark:text-blue-400 rounded p-3 mb-6">
-              Your new baseline will be set to your Week 5 target sets, so you'll continue progressing from where you left off.
+              Your new baseline will be set to your Week 5 target sets, so you&apos;ll continue progressing from where you left off.
             </p>
 
             <div className="flex gap-3">

@@ -3,8 +3,8 @@
 import {
   MuscleGroup,
   MuscleGroupRow,
-  Exercise,
-  ExerciseRow,
+  LibraryExercise,
+  LibraryExerciseRow,
   MesocycleTemplate,
   MesocycleTemplateRow,
   TemplateDay,
@@ -13,10 +13,10 @@ import {
   TemplateExerciseRow,
   ActiveMesocycle,
   ActiveMesocycleRow,
-  WorkoutSession,
-  WorkoutSessionRow,
-  WorkoutSet,
-  WorkoutSetRow,
+  AdvancedWorkoutSession,
+  AdvancedWorkoutSessionRow,
+  AdvancedWorkoutSet,
+  AdvancedWorkoutSetRow,
   MuscleGroupFeedback,
   MuscleFeedbackRow,
   WeeklySetOverride,
@@ -30,7 +30,7 @@ export const convertMuscleGroup = (row: MuscleGroupRow): MuscleGroup => ({
   createdAt: new Date(row.created_at),
 })
 
-export const convertExercise = (row: ExerciseRow): Exercise => ({
+export const convertLibraryExercise = (row: LibraryExerciseRow): LibraryExercise => ({
   id: row.id,
   name: row.name,
   primaryMuscle: row.primary_muscle,
@@ -83,7 +83,7 @@ export const convertActiveMesocycle = (row: ActiveMesocycleRow): ActiveMesocycle
   createdAt: new Date(row.created_at),
 })
 
-export const convertWorkoutSession = (row: WorkoutSessionRow): WorkoutSession => ({
+export const convertWorkoutSession = (row: AdvancedWorkoutSessionRow): AdvancedWorkoutSession => ({
   id: row.id,
   mesocycleId: row.mesocycle_id,
   week: row.week,
@@ -94,7 +94,7 @@ export const convertWorkoutSession = (row: WorkoutSessionRow): WorkoutSession =>
   createdAt: new Date(row.created_at),
 })
 
-export const convertWorkoutSet = (row: WorkoutSetRow): WorkoutSet => ({
+export const convertWorkoutSet = (row: AdvancedWorkoutSetRow): AdvancedWorkoutSet => ({
   id: row.id,
   sessionId: row.session_id,
   exerciseId: row.exercise_id,

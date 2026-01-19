@@ -259,8 +259,8 @@ export default function AdjustPage() {
           <ul className="text-sm space-y-1 text-muted-foreground">
             <li>• Default progression: W1 baseline, W2 +1, W3 +2, W4 -1 (deload), W5 +2</li>
             <li>• Enter a custom number to override the default for that week</li>
-            <li>• Click "Save" to apply your custom set count</li>
-            <li>• Click "Clear" to revert to the default progression</li>
+            <li>• Click &quot;Save&quot; to apply your custom set count</li>
+            <li>• Click &quot;Clear&quot; to revert to the default progression</li>
           </ul>
         </Card>
       </div>

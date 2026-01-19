@@ -238,7 +238,7 @@ export default function TodayPage() {
             </Button>
           </Link>
 
-          <h1 className="text-3xl font-bold mb-2">Select Today's Day</h1>
+          <h1 className="text-3xl font-bold mb-2">Select Today&apos;s Day</h1>
           <p className="text-muted-foreground mb-6">
             Week {cycle.currentWeek} of your cycle - which day are you training?
           </p>
@@ -284,7 +284,7 @@ export default function TodayPage() {
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Today's Workout</h1>
+          <h1 className="text-3xl font-bold mb-2">Today&apos;s Workout</h1>
           <p className="text-muted-foreground">
             Week {session.week}, Day {session.dayNumber} • {session.status}
           </p>

@@ -42,7 +42,7 @@ export function Navigation() {
               return (
                 <Link key={item.href} href={item.href}>
                   <Button
-                    variant={isActive ? 'default' : 'ghost'}
+                    variant={isActive ? 'primary' : 'ghost'}
                     size="sm"
                     className="gap-2"
                   >
