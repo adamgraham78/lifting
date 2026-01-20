@@ -34,7 +34,8 @@ export default function SignupPage() {
 
     try {
       await signUp(email, password)
-      router.push('/dashboard')
+      // Use hard navigation to ensure session cookies are sent to the server
+      window.location.href = '/dashboard'
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign up')
     } finally {
