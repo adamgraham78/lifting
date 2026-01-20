@@ -64,10 +64,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       throw error
+    }
+
+    // Update user state immediately to avoid race condition with onAuthStateChange
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email || '',
+        createdAt: new Date(data.user.created_at),
+      })
     }
   }
 
