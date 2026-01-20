@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { createServerClient, serialize } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -23,33 +23,43 @@ export async function middleware(request: NextRequest) {
 
   const { data } = await supabase.auth.getUser()
 
+  // Helper to create redirect with cookies preserved
+  const redirectWithCookies = (url: string) => {
+    const redirectResponse = NextResponse.redirect(new URL(url, request.url))
+    // Copy all cookies from supabaseResponse to the redirect response
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value)
+    })
+    return redirectResponse
+  }
+
   // Protect /dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
     if (!data.user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      return redirectWithCookies('/auth/login')
     }
   }
 
   // Protect /settings routes
   if (request.nextUrl.pathname.startsWith('/settings')) {
     if (!data.user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      return redirectWithCookies('/auth/login')
     }
   }
 
   // Redirect authenticated users away from auth pages
   if (request.nextUrl.pathname.startsWith('/auth') && data.user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return redirectWithCookies('/dashboard')
   }
 
   // Redirect unauthenticated users from root to login
   if (request.nextUrl.pathname === '/' && !data.user) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+    return redirectWithCookies('/auth/login')
   }
 
   // Redirect authenticated users from root to dashboard
   if (request.nextUrl.pathname === '/' && data.user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return redirectWithCookies('/dashboard')
   }
 
   return supabaseResponse
